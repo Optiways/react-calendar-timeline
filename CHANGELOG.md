@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres (more or less) to [Semantic Versioning](http://semver.org/).
 
+## 0.29.0
+
+* Remove moment dependency 
+
 ## 0.28.0
 
 * Add unit argument to onZoom and onTimeChange callbacks

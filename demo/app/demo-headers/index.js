@@ -14,6 +14,7 @@ import Timeline, {
 } from 'react-calendar-timeline'
 
 import generateFakeData from '../generate-fake-data'
+import intlFormat from 'date-fns/intlFormat'
 
 var minTime = moment()
   .add(-6, 'months')
@@ -234,7 +235,7 @@ export default class App extends Component {
                           })}
                         >
                           <div className="sticky">
-                            {interval.startTime.format('YYYY')}
+                            {intlFormat(interval.startTime, {year: 'numeric'})}
                           </div>
                         </div>
                       )
@@ -272,7 +273,7 @@ export default class App extends Component {
                           })}
                         >
                           <div className="sticky">
-                            {interval.startTime.format('MM/DD')}
+                          {intlFormat(interval.startTime, {month: 'long', day: 'numeric'})}
                           </div>
                         </div>
                       )
@@ -307,7 +308,7 @@ export default class App extends Component {
                             style: intervalStyle
                           })}
                         >
-                          {interval.startTime.format('HH')}
+                            {intlFormat(interval.startTime, {hour: 'numeric'})}
                         </div>
                       )
                     })}
@@ -317,7 +318,7 @@ export default class App extends Component {
             </CustomHeader>
             <DateHeader
               unit="week"
-              labelFormat="MM/DD"
+              labelFormat={{month: "short", day: "numeric"}}
               height={50}
               headerData={{ hey: 'date header' }}
               intervalRenderer={(

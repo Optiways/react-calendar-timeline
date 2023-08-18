@@ -56,14 +56,30 @@ class Columns extends Component {
       minUnit,
       timeSteps,
       (time, nextTime) => {
-        const minUnitValue = time.get(minUnit === 'day' ? 'date' : minUnit)
+        let minUnitValue = 0;
+        switch (minUnit){
+          case 'year':
+            minUnitValue = time.getFullYear(); break;
+          case 'month':
+            minUnitValue = time.getMonth(); break;
+          case 'week':
+            // ???
+          case 'day':
+            minUnitValue = time.getDate(); break;
+          case 'hour':
+            minUnitValue = time.getHours(); break;
+          case 'minute':
+            minUnitValue = time.getMinutes(); break;
+          case 'seconds':
+            minUnitValue = time.getSeconds(); break;
+        };
         const firstOfType = minUnitValue === (minUnit === 'day' ? 1 : 0)
 
         let classNamesForTime = []
         if (verticalLineClassNamesForTime) {
           classNamesForTime = verticalLineClassNamesForTime(
-            time.unix() * 1000, // turn into ms, which is what verticalLineClassNamesForTime expects
-            nextTime.unix() * 1000 - 1
+            time, 
+            nextTime - 1
           )
         }
 
@@ -72,7 +88,7 @@ class Columns extends Component {
           'rct-vl' +
           (firstOfType ? ' rct-vl-first' : '') +
           (minUnit === 'day' || minUnit === 'hour' || minUnit === 'minute'
-            ? ` rct-day-${time.day()} `
+            ? ` rct-day-${time.getDate()} `
             : ' ') +
           classNamesForTime.join(' ')
 

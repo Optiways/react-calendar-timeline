@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React, { Component } from 'react'
-import moment from 'moment'
 
 import Items from './items/Items'
 import Sidebar from './layout/Sidebar'

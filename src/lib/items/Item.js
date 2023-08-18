@@ -1,7 +1,6 @@
 import { Component } from 'react'
 import PropTypes from 'prop-types'
 import interact from 'interactjs'
-import moment from 'moment'
 
 import { _get, deepObjectCompare } from '../utility/generic'
 import { composeEvents } from '../utility/events'
@@ -138,7 +137,7 @@ export default class Item extends Component {
   dragTimeSnap(dragTime, considerOffset) {
     const { dragSnap } = this.props
     if (dragSnap) {
-      const offset = considerOffset ? moment().utcOffset() * 60 * 1000 : 0
+      const offset = considerOffset ? new Date().getTimezoneOffset() * 60 * 1000 : 0
       return Math.round(dragTime / dragSnap) * dragSnap - offset % dragSnap
     } else {
       return dragTime
@@ -156,7 +155,7 @@ export default class Item extends Component {
   }
 
   dragTime(e) {
-    const startTime = moment(this.itemTimeStart)
+    const startTime = new Date(this.itemTimeStart)
 
     if (this.state.dragging) {
       return this.dragTimeSnap(this.timeFor(e) + this.state.dragStart.offset, true)
