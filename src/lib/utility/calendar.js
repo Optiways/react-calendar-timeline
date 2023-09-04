@@ -1,3 +1,24 @@
+import { startOfDay,
+  startOfHour,
+  startOfMinute,
+  startOfMonth,
+  startOfSecond,
+  startOfYear,
+  startOfWeek,
+  setWeek,
+  setDate,
+  setHours,
+  setMinutes,
+  setSeconds,
+  setYear,
+  setMonth,
+  getFullYear,
+  getMonth,
+  getWeek,
+  getDate,
+  getHours,
+  getMinutes,
+  getSeconds } from 'date-fns'
 import { _get } from './generic'
 
 /**
@@ -58,58 +79,46 @@ export function calculateTimeForXPosition(
   return timeFromCanvasTimeStart + canvasTimeStart
 }
 
-function setUnitValue(value, unit, callback) {
-  let date = new Date(value);
-  switch (unit){
-    case 'year':
-      date.setYear(callback(date.getFullYear())); break;
-    case 'month':
-      date.setMonth(callback(date.getMonth()));break;
-    case 'week':
-      // ???
-    case 'day':
-      date.setDate(callback(date.getDate()));break;
-    case 'hour':
-      date.setHours(callback(date.getHours()));break;
-    case 'minute':
-      date.setMinutes(callback(date.getMinutes()));break;
-    case 'seconds':
-      date.setSeconds(callback(date.getSeconds()));break;
-  }
-  return date
+export const getUnitValue = {
+  'year': getFullYear,
+  'month': getMonth,
+  'week': getWeek,
+  'day': getDate,
+  'hour': getHours,
+  'minute': getMinutes,
+  'second': getSeconds
 }
 
-function setUnitStart(date, unit) {
-  date = new Date(date);
-  switch (unit){
-    case 'year':
-      date.setMonth(0);
-    case 'month':
-      date.setDate(1);
-    case 'week':
-      // ???
-    case 'day':
-      date.setHours(0);
-    case 'hour':
-      date.setMinutes(0);
-    case 'minute':
-      date.setSeconds(0);
-    case 'seconds':
-      date.setMilliseconds(0);
-  }
-  return date;
+export const setUnitValue = {
+  'year': setYear,
+  'month': setMonth,
+  'week': setWeek,
+  'day': setDate,
+  'hour': setHours,
+  'minute': setMinutes,
+  'second': setSeconds
+}
+
+export const setUnitStart = {
+  'year': startOfYear,
+  'month': startOfMonth,
+  'week': startOfWeek,
+  'day': startOfDay,
+  'hour': startOfHour,
+  'minute': startOfMinute,
+  'second': startOfSecond
 }
 
 // | `unit`| `second`, `minute`, `hour`, `day`, `week`, `month`, `year` intervals between columns |
 export function iterateTimes(start, end, unit, timeSteps, callback) {
-  let time = setUnitStart(start, unit)
+  let time = setUnitStart[unit](start)
 
   if (timeSteps[unit] && timeSteps[unit] > 1) {
-    time = setUnitValue(time, unit, (value) => value - value % timeSteps[unit])
+    time = setUnitValue[unit](time, getUnitValue[unit](time) * (1 - 1 % timeSteps[unit]))
   }
 
   while (time.valueOf() < end) {
-    let nextTime = setUnitValue(new Date(time), unit, (value) => value + (timeSteps[unit] || 1))
+    let nextTime = setUnitValue[unit](new Date(time), getUnitValue[unit](time) + (timeSteps[unit] || 1))
     callback(time, nextTime)
     time = nextTime
   }

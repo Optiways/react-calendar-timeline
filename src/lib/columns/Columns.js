@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { Component } from 'react'
 
-import { iterateTimes } from '../utility/calendar'
+import { getUnitValue, iterateTimes } from '../utility/calendar'
 import { TimelineStateConsumer } from '../timeline/TimelineStateContext'
 
 const passThroughPropTypes = {
@@ -57,22 +57,7 @@ class Columns extends Component {
       timeSteps,
       (time, nextTime) => {
         let minUnitValue = 0;
-        switch (minUnit){
-          case 'year':
-            minUnitValue = time.getFullYear(); break;
-          case 'month':
-            minUnitValue = time.getMonth(); break;
-          case 'week':
-            // ???
-          case 'day':
-            minUnitValue = time.getDate(); break;
-          case 'hour':
-            minUnitValue = time.getHours(); break;
-          case 'minute':
-            minUnitValue = time.getMinutes(); break;
-          case 'seconds':
-            minUnitValue = time.getSeconds(); break;
-        };
+        minUnitValue = getUnitValue[minUnit](time);
         const firstOfType = minUnitValue === (minUnit === 'day' ? 1 : 0)
 
         let classNamesForTime = []
@@ -88,7 +73,7 @@ class Columns extends Component {
           'rct-vl' +
           (firstOfType ? ' rct-vl-first' : '') +
           (minUnit === 'day' || minUnit === 'hour' || minUnit === 'minute'
-            ? ` rct-day-${time.getDate()} `
+            ? ` rct-day-${time.getDay()} `
             : ' ') +
           classNamesForTime.join(' ')
 

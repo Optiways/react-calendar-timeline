@@ -42,11 +42,10 @@ class DateHeader extends React.Component {
 
   getLabelFormat = (interval, unit, labelWidth) => {
     const { labelFormat } = this.props
+    const startTime = interval[0];
     if (typeof labelFormat === 'string') {
-      const startTime = interval[0];
       return intlFormat(startTime, {locale: labelFormat});
     } else if (typeof labelFormat === "object") {
-      const startTime = interval[0];
       return intlFormat(startTime, labelFormat);
     }
     else if (typeof labelFormat === 'function') {
