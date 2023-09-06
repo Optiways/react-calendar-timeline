@@ -393,7 +393,7 @@ function sum(arr = []) {
  * @param {*} lineHeight
  * @param {*} stackItems should items be stacked?
  */
-export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems) {
+export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems, topDelta) {
   var groupHeights = []
   var groupTops = []
 
@@ -414,7 +414,8 @@ export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems) {
       isGroupStacked,
       shouldStackEnforceOrder,
       lineHeight,
-      groupTop
+      groupTop,
+      topDelta,
     )
     // If group height is overridden, push new height
     // Do this late as item position still needs to be calculated
@@ -440,12 +441,16 @@ export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems) {
  * @param {*} lineHeight
  * @param {*} groupTop
  */
-export function stackGroup(itemsDimensions, isGroupStacked, shouldStackEnforceOrder, lineHeight, groupTop) {
+export function stackGroup(itemsDimensions, isGroupStacked, shouldStackEnforceOrder, lineHeight, groupTop, topDelta) {
   var groupHeight = 0
   var verticalMargin = 0
   const collision = shouldStackEnforceOrder ? collisionOrOrderMismatch : simpleCollision
+
+  const draggedItemIndex = itemsDimensions.findIndex(({isDragged}) => isDragged);
   // Find positions for each item in group
+  // skip dragged position
   for (let itemIndex = 0; itemIndex < itemsDimensions.length; itemIndex++) {
+    if (itemIndex === draggedItemIndex) continue;
     let r = {}
     if (isGroupStacked) {
       r = groupStack(
@@ -463,8 +468,32 @@ export function stackGroup(itemsDimensions, isGroupStacked, shouldStackEnforceOr
     groupHeight = r.groupHeight
     verticalMargin = r.verticalMargin
   }
+
+  if (draggedItemIndex >= 0) {
+    const upperMasterIndex = getUpperMasterIndex(topDelta - lineHeight, itemsDimensions);
+    itemsDimensions[draggedItemIndex].dimensions.top = itemsDimensions[upperMasterIndex].dimensions.top + lineHeight;
+    groupHeight += lineHeight
+    for (let itemIndex = upperMasterIndex + 1; itemIndex < itemsDimensions.length; itemIndex++)
+    {
+      if(itemIndex === draggedItemIndex) continue
+      itemsDimensions[itemIndex].dimensions.top += lineHeight
+    }
+  }
+    
   return { groupHeight, verticalMargin }
 }
+
+export function getUpperMasterIndex(position, itemsDimensions) {
+  const masterTops = itemsDimensions.filter(({isMaster}) => isMaster).sort((a, b)=> a.dimensions.top - b.dimensions.top);
+  console.log("masterTops",masterTops)
+  let k = 0;
+  while (k < masterTops.length-1 && masterTops[k].dimensions.top < position)
+  {
+    k++
+  }
+  return itemsDimensions.findIndex(({id}) => id === masterTops[k].id);
+}
+
 
 /**
  * Stack the items that will be visible
@@ -500,7 +529,8 @@ export function stackTimelineItems(
   dragTime,
   resizingEdge,
   resizeTime,
-  newGroupOrder
+  newGroupOrder,
+  topDelta,
 ) {
   const visibleItems = getVisibleItems(
     items,
@@ -536,7 +566,7 @@ export function stackTimelineItems(
   const groupOrders = getGroupOrders(groups, keys)
   let dimensionItems = visibleItemsWithInteraction
     .map(item =>
-      getItemDimensions({
+      ({...getItemDimensions({
         item,
         keys,
         canvasTimeStart,
@@ -545,7 +575,10 @@ export function stackTimelineItems(
         groupOrders,
         lineHeight,
         itemHeightRatio
-      })
+      }),
+      isMaster: item.isMaster,
+      isDragged: _get(item, keys.itemIdKey) === draggingItem
+    })
     )
     .filter(item => !!item)
   // Get a new array of groupOrders holding the stacked items
@@ -553,8 +586,11 @@ export function stackTimelineItems(
     dimensionItems,
     groupOrders,
     lineHeight,
-    stackItems
-  )
+    stackItems,
+    topDelta
+  );
+
+  
   return { dimensionItems, height, groupHeights, groupTops }
 }
 

@@ -76,6 +76,7 @@ export default class Item extends Component {
 
     this.state = {
       interactMounted: false,
+      topDelta: null,
 
       dragging: null,
       dragStart: null,
@@ -95,6 +96,7 @@ export default class Item extends Component {
       nextState.dragging !== this.state.dragging ||
       nextState.dragTime !== this.state.dragTime ||
       nextState.dragGroupDelta !== this.state.dragGroupDelta ||
+      nextState.topDelta !== this.state.topDelta ||
       nextState.resizing !== this.state.resizing ||
       nextState.resizeTime !== this.state.resizeTime ||
       nextProps.keys !== this.props.keys ||
@@ -171,7 +173,7 @@ export default class Item extends Component {
     return (e.pageX - offset + scrolls.scrollLeft) * ratio + this.props.canvasTimeStart;
   }
 
-  dragGroupDelta(e) {
+  dragGroupAndTopDelta(e) {
     const { groupTops, order } = this.props
     if (this.state.dragging) {
       if (!this.props.canChangeGroup) {
@@ -181,10 +183,11 @@ export default class Item extends Component {
 
       const offset = getSumOffset(this.props.scrollRef).offsetTop
       const scrolls = getSumScroll(this.props.scrollRef)
-      
+      var topDelta = e.pageY - offset + scrolls.scrollTop 
+
       for (var key of Object.keys(groupTops)) {
         var groupTop = groupTops[key]
-        if (e.pageY - offset + scrolls.scrollTop > groupTop) {
+        if (topDelta > groupTop) {
           groupDelta = parseInt(key, 10) - order.index
         } else {
           break
@@ -192,12 +195,12 @@ export default class Item extends Component {
       }
 
       if (this.props.order.index + groupDelta < 0) {
-        return 0 - this.props.order.index
+        return {groupDelta: 0 - this.props.order.index, topDelta}
       } else {
-        return groupDelta
+        return {groupDelta, topDelta: topDelta}
       }
     } else {
-      return 0
+      return {groupDelta: 0, topDelta: 0}
     }
   }
 
@@ -251,7 +254,8 @@ export default class Item extends Component {
             offset: this.itemTimeStart - clickTime },
             preDragPosition: { x: e.target.offsetLeft, y: e.target.offsetTop },
             dragTime: this.itemTimeStart,
-            dragGroupDelta: 0
+            dragGroupDelta: 0,
+            topDelta: 0
           })
         } else {
           return false
@@ -260,7 +264,7 @@ export default class Item extends Component {
       .on('dragmove', e => {
         if (this.state.dragging) {
           let dragTime = this.dragTime(e)
-          let dragGroupDelta = this.dragGroupDelta(e)
+          let {groupDelta, topDelta} = this.dragGroupAndTopDelta(e)
           if (this.props.moveResizeValidator) {
             dragTime = this.props.moveResizeValidator(
               'move',
@@ -273,13 +277,15 @@ export default class Item extends Component {
             this.props.onDrag(
               this.itemId,
               dragTime,
-              this.props.order.index + dragGroupDelta
+              this.props.order.index + groupDelta,
+              topDelta
             )
           }
 
           this.setState({
             dragTime: dragTime,
-            dragGroupDelta: dragGroupDelta
+            dragGroupDelta: groupDelta,
+            topDelta
           })
         }
       })
@@ -295,11 +301,13 @@ export default class Item extends Component {
                 dragTime
               )
             }
+            let {groupDelta, topDelta} = this.dragGroupAndTopDelta(e)
 
             this.props.onDrop(
               this.itemId,
               dragTime,
-              this.props.order.index + this.dragGroupDelta(e)
+              this.props.order.index + groupDelta,
+              topDelta
             )
           }
 
@@ -615,6 +623,7 @@ export default class Item extends Component {
       dragStart: this.state.dragStart,
       dragTime: this.state.dragTime,
       dragGroupDelta: this.state.dragGroupDelta,
+      topDelta: this.state.topDelta,
       resizing: this.state.resizing,
       resizeEdge: this.state.resizeEdge,
       resizeStart: this.state.resizeStart,

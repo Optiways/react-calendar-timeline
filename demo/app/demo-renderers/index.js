@@ -36,12 +36,12 @@ export default class App extends Component {
   constructor(props) {
     super(props)
 
-    const { groups, items } = generateFakeData(100, 5000)
+    const { groups, items } = generateFakeData(2, 16, 0)
     const visibleTimeStart = moment()
-      .startOf('month')
+      .startOf('week')
       .toDate().valueOf()
     const visibleTimeEnd = moment()
-      .endOf('month')
+      .endOf('week')
       .toDate().valueOf()
 
     this.state = {
@@ -76,7 +76,7 @@ export default class App extends Component {
     console.log('Context Menu: ' + itemId, moment(time).format())
   }
 
-  handleItemMove = (itemId, dragTime, newGroupOrder) => {
+  handleItemMove = (itemId, dragTime, newGroupOrder, newMasterId) => {
     const { items, groups } = this.state
 
     const group = groups[newGroupOrder]
@@ -94,7 +94,7 @@ export default class App extends Component {
       )
     })
 
-    console.log('Moved', itemId, dragTime, newGroupOrder)
+    console.log('Moved', itemId, dragTime, newGroupOrder, newMasterId)
   }
 
   handleItemResize = (itemId, time, edge) => {
@@ -138,11 +138,6 @@ export default class App extends Component {
   }
 
   moveResizeValidator = (action, item, time) => {
-    if (time < new Date().getTime()) {
-      var newTime =
-        Math.ceil(new Date().getTime() / (15 * 60 * 1000)) * (15 * 60 * 1000)
-      return newTime
-    }
 
     return time
   }

@@ -17,7 +17,8 @@ import {
   calculateScrollCanvas,
   getCanvasBoundariesFromVisibleTime,
   getCanvasWidth,
-  stackTimelineItems
+  stackTimelineItems,
+  getUpperMasterIndex
 } from './utility/calendar'
 import { _get, _length } from './utility/generic'
 import {
@@ -669,7 +670,7 @@ export default class ReactCalendarTimeline extends Component {
     return time
   }
 
-  dragItem = (item, dragTime, newGroupOrder) => {
+  dragItem = (item, dragTime, newGroupOrder, topDelta) => {
     let newGroup = this.props.groups[newGroupOrder]
     const keys = this.props.keys
 
@@ -677,7 +678,8 @@ export default class ReactCalendarTimeline extends Component {
       draggingItem: item,
       dragTime: dragTime,
       newGroupOrder: newGroupOrder,
-      dragGroupTitle: newGroup ? _get(newGroup, keys.groupLabelKey) : ''
+      dragGroupTitle: newGroup ? _get(newGroup, keys.groupLabelKey) : '',
+      topDelta: topDelta,
     })
 
     this.updatingItem({
@@ -688,10 +690,12 @@ export default class ReactCalendarTimeline extends Component {
     })
   }
 
-  dropItem = (item, dragTime, newGroupOrder) => {
+  dropItem = (item, dragTime, newGroupOrder, newPosition) => {
+    const masterIndex = getUpperMasterIndex(newPosition, this.state.dimensionItems);
+    console.log(this.state.dimensionItems[masterIndex].id);
     this.setState({ draggingItem: null, dragTime: null, dragGroupTitle: null })
     if (this.props.onItemMove) {
-      this.props.onItemMove(item, dragTime, newGroupOrder)
+      this.props.onItemMove(item, dragTime, newGroupOrder, this.state.dimensionItems[masterIndex].id)
     }
   }
 
@@ -1027,7 +1031,8 @@ export default class ReactCalendarTimeline extends Component {
         this.state.dragTime,
         this.state.resizingEdge,
         this.state.resizeTime,
-        this.state.newGroupOrder
+        this.state.newGroupOrder,
+        this.state.topDelta
       )
       dimensionItems = stackResults.dimensionItems
       height = stackResults.height
