@@ -17,7 +17,7 @@ import {
   calculateScrollCanvas,
   getCanvasBoundariesFromVisibleTime,
   getCanvasWidth,
-  stackTimelineItems
+  stackTimelineItems,
 } from './utility/calendar'
 import { _get, _length } from './utility/generic'
 import {
@@ -329,7 +329,8 @@ export default class ReactCalendarTimeline extends Component {
       dimensionItems,
       height,
       groupHeights,
-      groupTops
+      groupTops,
+      masterTops
     } = stackTimelineItems(
       props.items,
       props.groups,
@@ -345,7 +346,8 @@ export default class ReactCalendarTimeline extends Component {
       this.state.dragTime,
       this.state.resizingEdge,
       this.state.resizeTime,
-      this.state.newGroupOrder
+      this.state.newGroupOrder,
+      this.state.masterId
     )
 
     /* eslint-disable react/no-direct-mutation-state */
@@ -353,6 +355,7 @@ export default class ReactCalendarTimeline extends Component {
     this.state.height = height
     this.state.groupHeights = groupHeights
     this.state.groupTops = groupTops
+    this.state.masterTops = masterTops
 
     /* eslint-enable */
   }
@@ -422,7 +425,8 @@ export default class ReactCalendarTimeline extends Component {
           prevState.dragTime,
           prevState.resizingEdge,
           prevState.resizeTime,
-          prevState.newGroupOrder
+          prevState.newGroupOrder,
+          prevState.masterId,
         )
       )
     }
@@ -476,7 +480,8 @@ export default class ReactCalendarTimeline extends Component {
       dimensionItems,
       height,
       groupHeights,
-      groupTops
+      groupTops,
+      masterTops
     } = stackTimelineItems(
       props.items,
       props.groups,
@@ -492,7 +497,8 @@ export default class ReactCalendarTimeline extends Component {
       this.state.dragTime,
       this.state.resizingEdge,
       this.state.resizeTime,
-      this.state.newGroupOrder
+      this.state.newGroupOrder,
+      this.state.masterId,
     )
 
     // this is needed by dragItem since it uses pageY from the drag events
@@ -503,7 +509,8 @@ export default class ReactCalendarTimeline extends Component {
       dimensionItems,
       height,
       groupHeights,
-      groupTops
+      groupTops,
+      masterTops
     })
 
     this.scrollComponent.scrollLeft = width
@@ -669,7 +676,7 @@ export default class ReactCalendarTimeline extends Component {
     return time
   }
 
-  dragItem = (item, dragTime, newGroupOrder) => {
+  dragItem = (item, dragTime, newGroupOrder, masterId) => {
     let newGroup = this.props.groups[newGroupOrder]
     const keys = this.props.keys
 
@@ -677,21 +684,23 @@ export default class ReactCalendarTimeline extends Component {
       draggingItem: item,
       dragTime: dragTime,
       newGroupOrder: newGroupOrder,
-      dragGroupTitle: newGroup ? _get(newGroup, keys.groupLabelKey) : ''
+      dragGroupTitle: newGroup ? _get(newGroup, keys.groupLabelKey) : '',
+      masterId: masterId
     })
 
     this.updatingItem({
       eventType: 'move',
       itemId: item,
       time: dragTime,
-      newGroupOrder
+      newGroupOrder,
+      masterId
     })
   }
 
-  dropItem = (item, dragTime, newGroupOrder) => {
+  dropItem = (item, dragTime, newGroupOrder, masterId) => {
     this.setState({ draggingItem: null, dragTime: null, dragGroupTitle: null })
     if (this.props.onItemMove) {
-      this.props.onItemMove(item, dragTime, newGroupOrder)
+      this.props.onItemMove(item, dragTime, newGroupOrder, masterId)
     }
   }
 
@@ -717,9 +726,9 @@ export default class ReactCalendarTimeline extends Component {
     }
   }
 
-  updatingItem = ({ eventType, itemId, time, edge, newGroupOrder }) => {
+  updatingItem = ({ eventType, itemId, time, edge, newGroupOrder, masterId }) => {
     if (this.props.onItemDrag) {
-      this.props.onItemDrag({ eventType, itemId, time, edge, newGroupOrder })
+      this.props.onItemDrag({ eventType, itemId, time, edge, newGroupOrder, masterId })
     }
   }
 
@@ -814,7 +823,8 @@ export default class ReactCalendarTimeline extends Component {
     minUnit,
     dimensionItems,
     groupHeights,
-    groupTops
+    groupTops,
+    masterTops
   ) {
     return (
       <Items
@@ -823,6 +833,7 @@ export default class ReactCalendarTimeline extends Component {
         canvasWidth={canvasWidth}
         dimensionItems={dimensionItems}
         groupTops={groupTops}
+        masterTops={masterTops}
         items={this.props.items}
         groups={this.props.groups}
         keys={this.props.keys}
@@ -903,6 +914,7 @@ export default class ReactCalendarTimeline extends Component {
     dimensionItems,
     groupHeights,
     groupTops,
+    masterTops,
     height,
     visibleTimeStart,
     visibleTimeEnd,
@@ -930,6 +942,7 @@ export default class ReactCalendarTimeline extends Component {
       keys: this.props.keys,
       groupHeights: groupHeights,
       groupTops: groupTops,
+      masterTops: masterTops,
       selected: this.getSelected(),
       height: height,
       minUnit: minUnit,
@@ -1003,7 +1016,7 @@ export default class ReactCalendarTimeline extends Component {
       canvasTimeStart,
       canvasTimeEnd
     } = this.state
-    let { dimensionItems, height, groupHeights, groupTops } = this.state
+    let { dimensionItems, height, groupHeights, groupTops, masterTops } = this.state
 
     const zoom = visibleTimeEnd - visibleTimeStart
     const canvasWidth = getCanvasWidth(width)
@@ -1027,12 +1040,14 @@ export default class ReactCalendarTimeline extends Component {
         this.state.dragTime,
         this.state.resizingEdge,
         this.state.resizeTime,
-        this.state.newGroupOrder
+        this.state.newGroupOrder,
+        this.state.masterId
       )
       dimensionItems = stackResults.dimensionItems
       height = stackResults.height
       groupHeights = stackResults.groupHeights
       groupTops = stackResults.groupTops
+      masterTops = stackResults.masterTops
     }
 
     const outerComponentStyle = {
@@ -1093,7 +1108,8 @@ export default class ReactCalendarTimeline extends Component {
                       minUnit,
                       dimensionItems,
                       groupHeights,
-                      groupTops
+                      groupTops,
+                      masterTops
                     )}
                     {this.childrenWithProps(
                       canvasTimeStart,
@@ -1102,6 +1118,7 @@ export default class ReactCalendarTimeline extends Component {
                       dimensionItems,
                       groupHeights,
                       groupTops,
+                      masterTops,
                       height,
                       visibleTimeStart,
                       visibleTimeEnd,

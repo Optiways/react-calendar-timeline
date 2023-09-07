@@ -53,6 +53,7 @@ export default class Items extends Component {
 
     dimensionItems: PropTypes.array,
     groupTops: PropTypes.array,
+    masterTops: PropTypes.array,
     useResizeHandle: PropTypes.bool,
     scrollRef: PropTypes.object
   }
@@ -147,6 +148,7 @@ export default class Items extends Component {
               }
               useResizeHandle={this.props.useResizeHandle}
               groupTops={this.props.groupTops}
+              masterTops={this.props.masterTops}
               canvasTimeStart={this.props.canvasTimeStart}
               canvasTimeEnd={this.props.canvasTimeEnd}
               canvasWidth={this.props.canvasWidth}
