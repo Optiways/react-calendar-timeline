@@ -199,25 +199,24 @@ export default class Item extends Component {
       const newGroupTop = groupTops[groupIndex-1];
 
       // Compute master Id 
-      // First filter masters that are aligned on the X axe 
+      // First filter masters that are aligned on the X axe and in the same group
       const offsetLeft = getSumOffset(this.props.scrollRef).offsetLeft
-      const masterTopsInColumn = masterTops.filter(
+      const masterTopsInColumnAndGroup = masterTops.filter(
         ({dimensions}) => 
           dimensions.left < (e.pageX - offsetLeft + scrolls.scrollLeft) && 
-          dimensions.left + dimensions.width > (e.pageX - offsetLeft + scrolls.scrollLeft)
+          dimensions.left + dimensions.width > (e.pageX - offsetLeft + scrolls.scrollLeft) &&
+          dimensions.top > newGroupTop && 
+          (groupIndex== groupTops.length || dimensions.top < groupTops[groupIndex])
         )
-      // Then get closest upper master which is in the correct group
-      // Iterate on each master and check if it is the closest one, else continue
-      for (let masterIndex=0; masterIndex<masterTopsInColumn.length; masterIndex++) {
-        const currentlyTestedMasterTop = masterTopsInColumn[masterIndex].dimensions.top;
-        masterId = masterTopsInColumn[masterIndex].id;
-        if (
-          (masterIndex === masterTopsInColumn.length-1 || // It is the last master OR
-             topDelta < masterTopsInColumn[masterIndex + 1].dimensions.top) // next master top is bigger than cursor
-          && currentlyTestedMasterTop > newGroupTop // AND master is in the same group as cursor
-          ) {
+      
+      // Then get the closest upper master 
+      // Iterate on each master and check if it is above the closest one, else continue
+      for (let masterIndex=0; masterIndex<masterTopsInColumnAndGroup.length; masterIndex++) {
+        masterId = masterTopsInColumnAndGroup[masterIndex].id;
+        if (masterIndex == masterTopsInColumnAndGroup.length-1 ||
+          topDelta < masterTopsInColumnAndGroup[masterIndex+1].dimensions.top) {
           break
-        }  
+        }
       }
 
       if (this.props.order.index + groupDelta < 0) {
