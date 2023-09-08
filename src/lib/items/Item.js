@@ -181,11 +181,12 @@ export default class Item extends Component {
         return 0
       }
       let groupDelta = 0
-      let masterId = masterTops[0].id
+      let masterId = null
 
-      const offset = getSumOffset(this.props.scrollRef).offsetTop
+      // Compute group difference based on groupTops
+      const offsetTop = getSumOffset(this.props.scrollRef).offsetTop
       const scrolls = getSumScroll(this.props.scrollRef)
-      var topDelta = e.pageY - offset + scrolls.scrollTop 
+      var topDelta = e.pageY - offsetTop + scrolls.scrollTop 
       let groupIndex=0;
       for (groupIndex; groupIndex<groupTops.length; groupIndex++) {
         var groupTop = groupTops[groupIndex]
@@ -195,12 +196,26 @@ export default class Item extends Component {
           break
         }
       }
+      const newGroupTop = groupTops[groupIndex-1];
 
-      let masterIndex=0
-      for (masterIndex; masterIndex<masterTops.length; masterIndex++) {
-        var masterTop = masterTops[masterIndex].dimensions.top
-        masterId = masterTops[masterIndex].id;
-        if ((masterIndex === masterTops.length-1 || topDelta < masterTops[masterIndex + 1].dimensions.top) && masterTop > groupTops[groupIndex-1]) {
+      // Compute master Id 
+      // First filter masters that are aligned on the X axe 
+      const offsetLeft = getSumOffset(this.props.scrollRef).offsetLeft
+      const masterTopsInColumn = masterTops.filter(
+        ({dimensions}) => 
+          dimensions.left < (e.pageX - offsetLeft + scrolls.scrollLeft) && 
+          dimensions.left + dimensions.width > (e.pageX - offsetLeft + scrolls.scrollLeft)
+        )
+      // Then get closest upper master which is in the correct group
+      // Iterate on each master and check if it is the closest one, else continue
+      for (let masterIndex=0; masterIndex<masterTopsInColumn.length; masterIndex++) {
+        const currentlyTestedMasterTop = masterTopsInColumn[masterIndex].dimensions.top;
+        masterId = masterTopsInColumn[masterIndex].id;
+        if (
+          (masterIndex === masterTopsInColumn.length-1 || // It is the last master OR
+             topDelta < masterTopsInColumn[masterIndex + 1].dimensions.top) // next master top is bigger than cursor
+          && currentlyTestedMasterTop > newGroupTop // AND master is in the same group as cursor
+          ) {
           break
         }  
       }
