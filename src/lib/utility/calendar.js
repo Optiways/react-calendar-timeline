@@ -393,9 +393,10 @@ function sum(arr = []) {
  * @param {*} lineHeight
  * @param {*} stackItems should items be stacked?
  */
-export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems) {
+export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems){
   var groupHeights = []
   var groupTops = []
+  var masterTops = []
 
   var groupedItems = getGroupedItems(itemsDimensions, groupOrders)
 
@@ -414,7 +415,7 @@ export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems) {
       isGroupStacked,
       shouldStackEnforceOrder,
       lineHeight,
-      groupTop
+      groupTop,
     )
     // If group height is overridden, push new height
     // Do this late as item position still needs to be calculated
@@ -425,11 +426,14 @@ export function stackAll(itemsDimensions, groupOrders, lineHeight, stackItems) {
       groupHeights.push(Math.max(groupHeight, lineHeight))
     }
   }
+
+  masterTops = itemsDimensions.filter(({isMaster}) => isMaster).sort((a, b)=> a.dimensions.top - b.dimensions.top);
   
   return {
     height: sum(groupHeights),
     groupHeights,
-    groupTops
+    groupTops,
+    masterTops
   }
 }
 
@@ -484,6 +488,7 @@ export function stackGroup(itemsDimensions, isGroupStacked, shouldStackEnforceOr
  * @param {left or right} resizingEdge
  * @param {number} resizeTime
  * @param {number} newGroupOrder
+ * @param {number} masterId
  */
 export function stackTimelineItems(
   items,
@@ -500,7 +505,8 @@ export function stackTimelineItems(
   dragTime,
   resizingEdge,
   resizeTime,
-  newGroupOrder
+  newGroupOrder,
+  masterId,
 ) {
   const visibleItems = getVisibleItems(
     items,
@@ -518,9 +524,17 @@ export function stackTimelineItems(
       resizingEdge,
       resizeTime,
       groups,
-      newGroupOrder
+      newGroupOrder,
     })
   )
+
+    // Reorder dragged item 
+    const draggedItemIndex = visibleItemsWithInteraction.findIndex((item) => _get(item, keys.itemIdKey) === draggingItem);
+    if (draggedItemIndex >  0) {
+      const [draggedItem] = visibleItemsWithInteraction.splice(draggedItemIndex, 1);
+      const masterIndex = visibleItemsWithInteraction.findIndex(({id}) => id === masterId);
+      visibleItemsWithInteraction.splice(masterIndex + 1, 0, draggedItem);
+    }
 
   // if there are no groups return an empty array of dimensions
   if (groups.length === 0) {
@@ -528,7 +542,8 @@ export function stackTimelineItems(
       dimensionItems: [],
       height: 0,
       groupHeights: [],
-      groupTops: []
+      groupTops: [],
+      masterTops: []
     }
   }
 
@@ -536,7 +551,7 @@ export function stackTimelineItems(
   const groupOrders = getGroupOrders(groups, keys)
   let dimensionItems = visibleItemsWithInteraction
     .map(item =>
-      getItemDimensions({
+      ({...getItemDimensions({
         item,
         keys,
         canvasTimeStart,
@@ -545,17 +560,19 @@ export function stackTimelineItems(
         groupOrders,
         lineHeight,
         itemHeightRatio
-      })
+      }),
+      isMaster: item.isMaster,
+    })
     )
     .filter(item => !!item)
   // Get a new array of groupOrders holding the stacked items
-  const { height, groupHeights, groupTops } = stackAll(
+  const { height, groupHeights, groupTops, masterTops } = stackAll(
     dimensionItems,
     groupOrders,
     lineHeight,
-    stackItems
-  )
-  return { dimensionItems, height, groupHeights, groupTops }
+    stackItems,
+  );
+  return { dimensionItems, height, groupHeights, groupTops, masterTops }
 }
 
 /**

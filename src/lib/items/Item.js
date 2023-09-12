@@ -53,6 +53,7 @@ export default class Item extends Component {
     canSelect: PropTypes.bool,
     dimensions: PropTypes.object,
     groupTops: PropTypes.array,
+    masterTops: PropTypes.array,
     useResizeHandle: PropTypes.bool,
     moveResizeValidator: PropTypes.func,
     onItemDoubleClick: PropTypes.func,
@@ -76,6 +77,7 @@ export default class Item extends Component {
 
     this.state = {
       interactMounted: false,
+      masterId: null,
 
       dragging: null,
       dragStart: null,
@@ -95,6 +97,7 @@ export default class Item extends Component {
       nextState.dragging !== this.state.dragging ||
       nextState.dragTime !== this.state.dragTime ||
       nextState.dragGroupDelta !== this.state.dragGroupDelta ||
+      nextState.masterId !== this.state.masterId ||
       nextState.resizing !== this.state.resizing ||
       nextState.resizeTime !== this.state.resizeTime ||
       nextProps.keys !== this.props.keys ||
@@ -171,33 +174,58 @@ export default class Item extends Component {
     return (e.pageX - offset + scrolls.scrollLeft) * ratio + this.props.canvasTimeStart;
   }
 
-  dragGroupDelta(e) {
-    const { groupTops, order } = this.props
+  dragGroupDeltaAndMasterId(e) {
+    const { groupTops, order, masterTops } = this.props
     if (this.state.dragging) {
       if (!this.props.canChangeGroup) {
         return 0
       }
       let groupDelta = 0
+      let masterId = null
 
-      const offset = getSumOffset(this.props.scrollRef).offsetTop
+      // Compute group difference based on groupTops
+      const offsetTop = getSumOffset(this.props.scrollRef).offsetTop
       const scrolls = getSumScroll(this.props.scrollRef)
-      
-      for (var key of Object.keys(groupTops)) {
-        var groupTop = groupTops[key]
-        if (e.pageY - offset + scrolls.scrollTop > groupTop) {
-          groupDelta = parseInt(key, 10) - order.index
+      var topDelta = e.pageY - offsetTop + scrolls.scrollTop 
+      let groupIndex=0;
+      for (groupIndex; groupIndex<groupTops.length; groupIndex++) {
+        var groupTop = groupTops[groupIndex]
+        if (topDelta > groupTop) {
+          groupDelta = groupIndex - order.index
         } else {
+          break
+        }
+      }
+      const newGroupTop = groupTops[groupIndex-1];
+
+      // Compute master Id 
+      // First filter masters that are aligned on the X axe and in the same group
+      const offsetLeft = getSumOffset(this.props.scrollRef).offsetLeft
+      const masterTopsInColumnAndGroup = masterTops.filter(
+        ({dimensions}) => 
+          dimensions.left < (e.pageX - offsetLeft + scrolls.scrollLeft) && 
+          dimensions.left + dimensions.width > (e.pageX - offsetLeft + scrolls.scrollLeft) &&
+          dimensions.top > newGroupTop && 
+          (groupIndex== groupTops.length || dimensions.top < groupTops[groupIndex])
+        )
+      
+      // Then get the closest upper master 
+      // Iterate on each master and check if it is above the closest one, else continue
+      for (let masterIndex=0; masterIndex<masterTopsInColumnAndGroup.length; masterIndex++) {
+        masterId = masterTopsInColumnAndGroup[masterIndex].id;
+        if (masterIndex == masterTopsInColumnAndGroup.length-1 ||
+          topDelta < masterTopsInColumnAndGroup[masterIndex+1].dimensions.top) {
           break
         }
       }
 
       if (this.props.order.index + groupDelta < 0) {
-        return 0 - this.props.order.index
+        return {groupDelta: 0 - this.props.order.index, masterId}
       } else {
-        return groupDelta
+        return {groupDelta, masterId}
       }
     } else {
-      return 0
+      return {groupDelta: 0, masterId: 0}
     }
   }
 
@@ -251,7 +279,8 @@ export default class Item extends Component {
             offset: this.itemTimeStart - clickTime },
             preDragPosition: { x: e.target.offsetLeft, y: e.target.offsetTop },
             dragTime: this.itemTimeStart,
-            dragGroupDelta: 0
+            dragGroupDelta: 0,
+            masterId: null
           })
         } else {
           return false
@@ -260,7 +289,7 @@ export default class Item extends Component {
       .on('dragmove', e => {
         if (this.state.dragging) {
           let dragTime = this.dragTime(e)
-          let dragGroupDelta = this.dragGroupDelta(e)
+          let {groupDelta, masterId} = this.dragGroupDeltaAndMasterId(e)
           if (this.props.moveResizeValidator) {
             dragTime = this.props.moveResizeValidator(
               'move',
@@ -273,13 +302,15 @@ export default class Item extends Component {
             this.props.onDrag(
               this.itemId,
               dragTime,
-              this.props.order.index + dragGroupDelta
+              this.props.order.index + groupDelta,
+              masterId,
             )
           }
 
           this.setState({
             dragTime: dragTime,
-            dragGroupDelta: dragGroupDelta
+            dragGroupDelta: groupDelta,
+            masterId
           })
         }
       })
@@ -295,11 +326,13 @@ export default class Item extends Component {
                 dragTime
               )
             }
+            let {groupDelta, masterId} = this.dragGroupDeltaAndMasterId(e)
 
             this.props.onDrop(
               this.itemId,
               dragTime,
-              this.props.order.index + this.dragGroupDelta(e)
+              this.props.order.index + groupDelta,
+              masterId
             )
           }
 
@@ -308,7 +341,8 @@ export default class Item extends Component {
             dragStart: null,
             preDragPosition: null,
             dragTime: null,
-            dragGroupDelta: null
+            dragGroupDelta: null,
+            masterId: null
           })
         }
       })
@@ -615,6 +649,7 @@ export default class Item extends Component {
       dragStart: this.state.dragStart,
       dragTime: this.state.dragTime,
       dragGroupDelta: this.state.dragGroupDelta,
+      masterId: this.state.masterId,
       resizing: this.state.resizing,
       resizeEdge: this.state.resizeEdge,
       resizeStart: this.state.resizeStart,
