@@ -56,8 +56,7 @@ class Columns extends Component {
       minUnit,
       timeSteps,
       (time, nextTime) => {
-        let minUnitValue = 0;
-        minUnitValue = getUnitValue[minUnit](time);
+        let minUnitValue = getUnitValue[minUnit](time);
         const firstOfType = minUnitValue === (minUnit === 'day' ? 1 : 0)
 
         let classNamesForTime = []

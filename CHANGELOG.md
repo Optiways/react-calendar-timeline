@@ -7,7 +7,8 @@ and this project adheres (more or less) to [Semantic Versioning](http://semver.o
 
 ## 0.29.0
 
-* Remove moment dependency 
+* Remove moment dependency #1
+* Add masters as referers for drag and drop #2
 
 ## 0.28.0
 
