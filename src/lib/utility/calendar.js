@@ -1,4 +1,24 @@
-import moment from 'moment'
+import { startOfDay,
+  startOfHour,
+  startOfMinute,
+  startOfMonth,
+  startOfSecond,
+  startOfYear,
+  startOfWeek,
+  setWeek,
+  setDate,
+  setHours,
+  setMinutes,
+  setSeconds,
+  setYear,
+  setMonth,
+  getFullYear,
+  getMonth,
+  getWeek,
+  getDate,
+  getHours,
+  getMinutes,
+  getSeconds } from 'date-fns'
 import { _get } from './generic'
 
 /**
@@ -59,16 +79,46 @@ export function calculateTimeForXPosition(
   return timeFromCanvasTimeStart + canvasTimeStart
 }
 
+export const getUnitValue = {
+  'year': getFullYear,
+  'month': getMonth,
+  'week': getWeek,
+  'day': getDate,
+  'hour': getHours,
+  'minute': getMinutes,
+  'second': getSeconds
+}
+
+export const setUnitValue = {
+  'year': setYear,
+  'month': setMonth,
+  'week': setWeek,
+  'day': setDate,
+  'hour': setHours,
+  'minute': setMinutes,
+  'second': setSeconds
+}
+
+export const setUnitStart = {
+  'year': startOfYear,
+  'month': startOfMonth,
+  'week': startOfWeek,
+  'day': startOfDay,
+  'hour': startOfHour,
+  'minute': startOfMinute,
+  'second': startOfSecond
+}
+
+// | `unit`| `second`, `minute`, `hour`, `day`, `week`, `month`, `year` intervals between columns |
 export function iterateTimes(start, end, unit, timeSteps, callback) {
-  let time = moment(start).startOf(unit)
+  let time = setUnitStart[unit](start)
 
   if (timeSteps[unit] && timeSteps[unit] > 1) {
-    let value = time.get(unit)
-    time.set(unit, value - value % timeSteps[unit])
+    time = setUnitValue[unit](time, getUnitValue[unit](time) * (1 - 1 % timeSteps[unit]))
   }
 
   while (time.valueOf() < end) {
-    let nextTime = moment(time).add(timeSteps[unit] || 1, `${unit}s`)
+    let nextTime = setUnitValue[unit](new Date(time), getUnitValue[unit](time) + (timeSteps[unit] || 1))
     callback(time, nextTime)
     time = nextTime
   }

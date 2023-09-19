@@ -6,6 +6,7 @@ import { getNextUnit } from '../utility/calendar'
 import { defaultHeaderFormats } from '../default-config'
 import memoize from 'memoize-one'
 import { CustomDateHeader } from './CustomDateHeader'
+import { intlFormat } from 'date-fns'
 
 class DateHeader extends React.Component {
   static propTypes = {
@@ -41,10 +42,13 @@ class DateHeader extends React.Component {
 
   getLabelFormat = (interval, unit, labelWidth) => {
     const { labelFormat } = this.props
+    const startTime = interval[0];
     if (typeof labelFormat === 'string') {
-      const startTime = interval[0]
-      return startTime.format(labelFormat)
-    } else if (typeof labelFormat === 'function') {
+      return intlFormat(startTime, {locale: labelFormat});
+    } else if (typeof labelFormat === "object") {
+      return intlFormat(startTime, labelFormat);
+    }
+    else if (typeof labelFormat === 'function') {
       return labelFormat(interval, unit, labelWidth)
     } else {
       throw new Error('labelFormat should be function or string')
@@ -144,17 +148,13 @@ function formatLabel(
   labelWidth,
   formatOptions = defaultHeaderFormats
 ) {
-  let format
-  if (labelWidth >= 150) {
-    format = formatOptions[unit]['long']
-  } else if (labelWidth >= 100) {
-    format = formatOptions[unit]['mediumLong']
-  } else if (labelWidth >= 50) {
-    format = formatOptions[unit]['medium']
-  } else {
-    format = formatOptions[unit]['short']
+  const format = {
+    year: 'numeric',
+    month: 'long',
+    weekday: 'long',
+    day: 'numeric'
   }
-  return timeStart.format(format)
+  return intlFormat(timeStart, format)
 }
 
 export default DateHeaderWrapper

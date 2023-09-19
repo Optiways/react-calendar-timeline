@@ -16,15 +16,8 @@ class Interval extends React.PureComponent {
   }
 
   onIntervalClick = () => {
-    const { primaryHeader, interval, unit, showPeriod } = this.props
-    if (primaryHeader) {
-      const nextUnit = getNextUnit(unit)
-      const newStartTime = interval.startTime.clone().startOf(nextUnit)
-      const newEndTime = interval.startTime.clone().endOf(nextUnit)
-      showPeriod(newStartTime, newEndTime)
-    } else {
-      showPeriod(interval.startTime, interval.endTime)
-    }
+    const { interval, showPeriod } = this.props
+    showPeriod(interval.startTime, interval.endTime)
   }
 
   getIntervalProps = (props = {}) => {
