@@ -12,7 +12,7 @@ import { startOfDay,
   setSeconds,
   setYear,
   setMonth,
-  getFullYear,
+  getYear,
   getMonth,
   getWeek,
   getDate,
@@ -80,7 +80,7 @@ export function calculateTimeForXPosition(
 }
 
 export const getUnitValue = {
-  'year': getFullYear,
+  'year': getYear,
   'month': getMonth,
   'week': getWeek,
   'day': getDate,
