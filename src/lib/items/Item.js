@@ -328,7 +328,7 @@ export default class Item extends Component {
             let {groupDelta, masterId} = this.dragGroupDeltaAndMasterId(e)
 
             this.props.onDrop(
-              this.itemId,
+              this.props.item,
               dragTime,
               this.props.order.index + groupDelta,
               masterId
